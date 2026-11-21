@@ -175,7 +175,6 @@ python3 ../generate.py --tf-dir . --check  # drift gate
 
 ## Origin
 
-Extracted from the
-[terraform-kinesis-pipeline](https://github.com/Yono1112/terraform-kinesis-pipeline)
-module, where this sheet drives a Kinesis → Lambda → S3 → SQS pipeline
-across dev / stg / prod.
+Extracted from a real Terraform module (a Kinesis → Lambda → S3 → SQS
+pipeline run across dev / stg / prod), where this sheet is the working
+parameter source for all three environments.
