@@ -1,0 +1,78 @@
+# =============================================================================
+# params.yaml — example SSOT parameter sheet
+#
+# Workflow:
+#   1. Edit THIS file (never edit environments/*.tfvars by hand).
+#   2. Run:  python3 ../generate.py --tf-dir .
+#   3. Commit params.yaml, the regenerated environments/*.tfvars and
+#      viewer/params.html together.
+#
+# Drift gate (CI / pre-commit):  python3 ../generate.py --tf-dir . --check
+# =============================================================================
+
+environments:
+  - dev
+  - staging
+  - prod
+
+# Japanese labels for the parameter groups, shown in viewer/params.html.
+groups:
+  General:
+    label_ja: 全般
+  App:
+    label_ja: アプリケーション
+  Network:
+    label_ja: ネットワーク
+
+parameters:
+
+  - name: name_prefix
+    group: General
+    type: string
+    description: "Prefix applied to every resource name, combined with the environment name."
+    description_ja: "すべてのリソース名に付与するプレフィックス。環境名と組み合わせて使用します。"
+    default: "demo-app"
+    # not set in any environment: the default applies everywhere
+
+  - name: tags
+    group: General
+    type: map(string)
+    description: "Additional tags merged onto every taggable resource."
+    description_ja: "タグ付け可能なすべてのリソースにマージされる追加タグ。"
+    default: {}
+    values:
+      dev:     { Owner: dev-team }
+      staging: { Owner: qa-team }
+      prod:    { Owner: platform-team }
+
+  - name: instance_count
+    group: App
+    type: number
+    description: "Number of application instances to run."
+    description_ja: "実行するアプリケーションのインスタンス数。"
+    default: 1
+    values:
+      dev: 1
+      staging: 2
+      prod: 4
+
+  - name: enable_detailed_logs
+    group: App
+    type: bool
+    description: "Enable verbose application logging."
+    description_ja: "アプリケーションの詳細ログを有効にします。"
+    default: false
+    values:
+      dev: true
+      # staging and prod fall back to the default (false)
+
+  - name: allowed_cidr_blocks
+    group: Network
+    type: list(string)
+    description: "CIDR blocks allowed to reach the application endpoint."
+    description_ja: "アプリケーションのエンドポイントへのアクセスを許可する CIDR ブロック。"
+    default: []
+    values:
+      dev:     ["10.0.0.0/8"]
+      staging: ["10.0.0.0/8", "172.16.0.0/12"]
+      prod:    ["203.0.113.0/24"]

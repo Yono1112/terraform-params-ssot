@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>パラメータシート — example</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, "Hiragino Sans",
+       "Noto Sans JP", sans-serif; color: #1c2330; background: #f6f7f9; }
+header { position: sticky; top: 0; z-index: 3; background: #fff;
+         border-bottom: 1px solid #d9dee6; padding: 14px 20px 10px; }
+h1 { font-size: 19px; margin: 0 0 4px; }
+.sub { margin: 0 0 8px; color: #5a6577; font-size: 13px; }
+.legend { font-size: 12.5px; color: #5a6577; display: flex; gap: 16px; flex-wrap: wrap; }
+.legend .swatch { display: inline-block; width: 11px; height: 11px; border-radius: 2px;
+                  vertical-align: -1px; margin-right: 4px; border: 1px solid #c8cfda; }
+#filter { margin-top: 10px; width: min(480px, 100%); padding: 7px 10px; font-size: 14px;
+          border: 1px solid #c8cfda; border-radius: 6px; }
+main { padding: 16px 20px 40px; overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; background: #fff;
+        box-shadow: 0 1px 3px rgba(16,24,40,.08); border-radius: 8px; overflow: hidden; }
+th, td { border-bottom: 1px solid #e4e8ef; padding: 10px 14px; text-align: left;
+         vertical-align: top; font-size: 14px; }
+thead th { position: sticky; top: 118px; background: #eef1f6; z-index: 2;
+           font-size: 12.5px; letter-spacing: .04em; color: #44506a; }
+thead th:first-child { left: 0; z-index: 3; }
+tr.group td { background: #33415c; color: #fff; font-weight: 600; font-size: 13.5px;
+              letter-spacing: .03em; padding-top: 12px; padding-bottom: 12px; }
+tbody tr.param.alt > td { background-color: #f7f9fc; }
+tbody tr.param > td.val.diff { background-color: #fff1c9; }
+td.name { position: sticky; left: 0; z-index: 1; background-color: #fff;
+          min-width: 180px; }
+td.name code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+               font-size: 13.5px; font-weight: 600; }
+td.name .type { color: #8a94a6; font-size: 11.5px; margin-top: 2px;
+                font-family: ui-monospace, Menlo, monospace; }
+td.desc { color: #3d4657; font-size: 13px; line-height: 1.6;
+          min-width: 280px; max-width: 520px; }
+td.val { white-space: nowrap; font-variant-numeric: tabular-nums; }
+td.val.is-default { color: #98a1b1; }
+td.val .inh { display: block; font-size: 10.5px; color: #a4adbd; }
+.null { font-style: italic; }
+footer { color: #8a94a6; font-size: 12px; padding: 0 20px 24px; }
+</style>
+</head>
+<body>
+<header>
+<h1>パラメータシート — example</h1>
+<p class="sub">このページは <code>params.yaml</code>（唯一の正本）から <code>tools/generate.py</code> で自動生成されています。直接編集せず、YAML を編集してください。各セルはその環境での<em>実効値</em>を表示します。</p>
+<div class="legend"><span><span class="swatch" style="background:#fff1c9"></span>ハイライト = 環境間で値が異なります</span><span><span class="swatch" style="background:#fff"></span><span style="color:#98a1b1">薄字</span> = デフォルト値と同じです</span><span>（デフォルト） = その環境では未設定のため、デフォルト値が適用されます</span></div>
+<input id="filter" type="search" placeholder="パラメータ名やキーワードで絞り込み…" aria-label="パラメータの絞り込み">
+</header>
+<main>
+<table>
+<thead><tr><th>パラメータ</th><th>説明</th><th>dev</th><th>staging</th><th>prod</th></tr></thead>
+<tbody>
+<tr class="group"><td colspan="5">全般</td></tr>
+<tr class="param" data-search="name_prefix general 全般 prefix applied to every resource name, combined with the environment name. すべてのリソース名に付与するプレフィックス。環境名と組み合わせて使用します。"><td class="name"><code>name_prefix</code><div class="type">string</div></td><td class="desc">すべてのリソース名に付与するプレフィックス。環境名と組み合わせて使用します。</td><td class="val is-default">demo-app<span class="inh">（デフォルト）</span></td><td class="val is-default">demo-app<span class="inh">（デフォルト）</span></td><td class="val is-default">demo-app<span class="inh">（デフォルト）</span></td></tr>
+<tr class="param alt" data-search="tags general 全般 additional tags merged onto every taggable resource. タグ付け可能なすべてのリソースにマージされる追加タグ。"><td class="name"><code>tags</code><div class="type">map(string)</div></td><td class="desc">タグ付け可能なすべてのリソースにマージされる追加タグ。</td><td class="val diff">Owner = dev-team</td><td class="val diff">Owner = qa-team</td><td class="val diff">Owner = platform-team</td></tr>
+<tr class="group"><td colspan="5">アプリケーション</td></tr>
+<tr class="param" data-search="instance_count app アプリケーション number of application instances to run. 実行するアプリケーションのインスタンス数。"><td class="name"><code>instance_count</code><div class="type">number</div></td><td class="desc">実行するアプリケーションのインスタンス数。</td><td class="val diff is-default">1</td><td class="val diff">2</td><td class="val diff">4</td></tr>
+<tr class="param alt" data-search="enable_detailed_logs app アプリケーション enable verbose application logging. アプリケーションの詳細ログを有効にします。"><td class="name"><code>enable_detailed_logs</code><div class="type">bool</div></td><td class="desc">アプリケーションの詳細ログを有効にします。</td><td class="val diff">true</td><td class="val diff is-default">false<span class="inh">（デフォルト）</span></td><td class="val diff is-default">false<span class="inh">（デフォルト）</span></td></tr>
+<tr class="group"><td colspan="5">ネットワーク</td></tr>
+<tr class="param" data-search="allowed_cidr_blocks network ネットワーク cidr blocks allowed to reach the application endpoint. アプリケーションのエンドポイントへのアクセスを許可する cidr ブロック。"><td class="name"><code>allowed_cidr_blocks</code><div class="type">list(string)</div></td><td class="desc">アプリケーションのエンドポイントへのアクセスを許可する CIDR ブロック。</td><td class="val diff">10.0.0.0/8</td><td class="val diff">10.0.0.0/8, 172.16.0.0/12</td><td class="val diff">203.0.113.0/24</td></tr>
+</tbody>
+</table>
+</main>
+<footer>正本： params.yaml ・ 再生成： python3 tools/generate.py ・ 乖離チェック： python3 tools/generate.py --check</footer>
+<script>
+const input = document.getElementById('filter');
+input.addEventListener('input', () => {
+  const q = input.value.trim().toLowerCase();
+  document.querySelectorAll('tr.param').forEach(tr => {
+    tr.style.display = (!q || tr.dataset.search.includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('tr.group').forEach(gr => {
+    let el = gr.nextElementSibling, any = false;
+    while (el && !el.classList.contains('group')) {
+      if (el.classList.contains('param') && el.style.display !== 'none') any = true;
+      el = el.nextElementSibling;
+    }
+    gr.style.display = any ? '' : 'none';
+  });
+});
+</script>
+</body>
+</html>
