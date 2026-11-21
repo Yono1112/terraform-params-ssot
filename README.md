@@ -1,3 +1,5 @@
+[English](README.md) | [日本語](README.ja.md)
+
 # terraform-params-ssot
 
 **A YAML parameter sheet as the single source of truth (SSOT) for a
