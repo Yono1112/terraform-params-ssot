@@ -2,7 +2,7 @@
 
 # terraform-params-ssot
 
-Terraform モジュールの環境ごとのパラメータ値を、YAML パラメータシート（`params.yaml`）という単一の正本（SSOT）で管理するツールです。`.tfvars` ファイルと HTML ビュワーを生成し、乖離検知も行えます。
+Terraform モジュールの環境ごとのパラメータ値を、YAML パラメータシート（`params.yaml`）という単一の正本（SSOT）で管理するツールです。`.tfvars` ファイルと HTML ビュワー、Markdown ビュワーを生成し、乖離検知も行えます。
 
 ## なぜ作ったか
 
@@ -11,7 +11,7 @@ Terraform モジュールの環境ごとのパラメータ値を、YAML パラ�
 `terraform-params-ssot` は、この二重管理をなくします。
 
 - すべての環境のパラメータ値を 1 つのファイル（`params.yaml`）で管理します。
-- `generate.py` が、Terraform 向けの `environments/<env>.tfvars` と人間向けの `viewer/params.html` の両方を生成します。
+- `generate.py` が、Terraform 向けの `environments/<env>.tfvars` と人間向けの `viewer/params.html`、`viewer/params.md` を生成します。
 - 生成時には常に `variables.tf` と既存の `.tfvars` ファイルとの照合を行います。`generate.py --check` を使えば、生成物とコミット済みファイルをバイト単位で比較できるため、pre-commit や CI のゲートとして組み込めます。
 
 ## 仕組み
@@ -23,6 +23,7 @@ flowchart LR
     V["variables.tf"] -.->|"cross-checks"| G
     G --> T["environments/{env}.tfvars"]
     G --> H["viewer/params.html"]
+    G --> M["viewer/params.md"]
     G -->|"--check compares"| C["committed outputs"]
 ```
 
@@ -75,23 +76,23 @@ python3 ../generate.py --tf-dir . --check  # drift gate
 生成は決定論的なため、`example/` で再生成してもコミット済みの生成物に差分は出ません。`--check` を実行すると次のように出力されます。
 
 ```text
-check OK: environments/*.tfvars and viewer/params.html match params.yaml
+check OK: environments/*.tfvars, viewer/params.html and viewer/params.md match params.yaml
 ```
 
-`example/viewer/params.html` をブラウザで開くと、パラメータ一覧表を確認できます。
+`example/viewer/params.html` をブラウザで開くと、パラメータ一覧表を確認できます。同じ表は `example/viewer/params.md` でも確認できます。
 
 ## 考え方
 
 ### 手で編集するものと生成物
 
 - **手で編集するもの:** `params.yaml`
-- **生成物（手で編集しない）:** `environments/<env>.tfvars` と `viewer/params.html`
+- **生成物（手で編集しない）:** `environments/<env>.tfvars` と `viewer/params.html`、`viewer/params.md`
 
 値を変更するときの日常的な流れは次のとおりです。
 
 1. `params.yaml` を編集する。
 2. `generate.py` を実行する。
-3. `params.yaml`、`environments/*.tfvars`、`viewer/params.html` をまとめてコミットする。
+3. `params.yaml`、`environments/*.tfvars`、`viewer/params.html`、`viewer/params.md` をまとめてコミットする。
 
 ### `variables.tf` も変更する必要があるとき
 
@@ -102,8 +103,9 @@ check OK: environments/*.tfvars and viewer/params.html match params.yaml
 - **環境:** 環境名はハードコードされません。`params.yaml` の `environments` に書いた名前と順序がそのまま使われます。
 - **ディレクトリ:** 出力時に親ディレクトリが存在しない場合、`generate.py` が必要に応じて作成します。
 - **tfvars の整形:** 1 行の代入文は `terraform fmt` と同じように連続する行で `=` の位置を揃えます。複数行の値（map など）は前後の行とは揃えられず、そこから新しい整列グループになります。
-- **tfvars のヘッダ:** 生成される `.tfvars` ファイルには、`params.yaml` から `tools/generate.py` で生成したため手動編集しないよう注意書きするヘッダが入ります。スクリプトを別の場所に置いた場合でも、ヘッダのテンプレート内の `tools/generate.py` というパスは固定です。
+- **tfvars のヘッダ:** 生成される `.tfvars` ファイルには、`params.yaml` から `generate.py` で生成したため手動編集しないよう注意書きするヘッダが入ります。スクリプトを別の場所に置いた場合でも、ヘッダのテンプレートではスクリプト名は常に `generate.py` と表記されます。
 - **HTML ビュワー:** `viewer/params.html` は日本語のページ（`lang="ja"`）です。フィルタ可能な表に、パラメータ、説明（`description_ja` を優先し、なければ `description` を使用）、環境ごとの有効値が表示されます。環境間で値が異なるセルはハイライトされます。デフォルトと同じ値は控えめなスタイルで表示され、デフォルトにフォールバックしている環境には `（デフォルト）` と付きます。
+- **Markdown ビュワー:** `viewer/params.md` には HTML ビュワーと同じパラメータ表が入ります。グループごとの表に、パラメータ名、型、説明、環境ごとの有効値を表示します。デフォルトにフォールバックしている環境には `（デフォルト）`、環境間で値が異なるパラメータには `※` が付きます。
 
 ## CLI リファレンス
 
@@ -115,6 +117,7 @@ check OK: environments/*.tfvars and viewer/params.html match params.yaml
 | `--variables PATH` | `<tf-dir>/variables.tf` | 照合に使う Terraform の変数定義ファイル |
 | `--tfvars-dir DIR` | `<tf-dir>/environments` | `.tfvars` ファイルの出力先ディレクトリ |
 | `--viewer PATH` | `<tf-dir>/viewer/params.html` | HTML ビュワーの出力先パス |
+| `--md PATH` | `<tf-dir>/viewer/params.md` | Markdown ビュワーの出力先パス |
 | `--title NAME` | `--tf-dir` のディレクトリ名 | ビュワーに表示するプロジェクト名 |
 | `--check` | *(オフ)* | ファイルを書き出さず、コミット済みの生成物と差分があれば終了コード `1` で終了する |
 | `-h`, `--help` | — | ヘルプを表示して終了する |
@@ -198,7 +201,7 @@ parameters:
 
 ### 2. バイト単位のチェック（`--check`）
 
-- ディスクへ書き込まずに、期待される `.tfvars` ファイルと `viewer/params.html` をメモリ上で再生成します。
+- ディスクへ書き込まずに、期待される `.tfvars` ファイルと `viewer/params.html`、`viewer/params.md` をメモリ上で再生成します。
 - 期待される各出力をコミット済みファイルと比較します。ファイルが存在しない場合は空として扱うため、乖離とみなされます。
 - 差分があるファイルが 1 つでもあれば、unified diff（各差分の先頭 80 行）を表示したあと `Run generate.py and commit the regenerated files.` と出力し、終了コード `1` で終了します。
 
@@ -272,7 +275,8 @@ jobs:
 │   │   ├── staging.tfvars
 │   │   └── prod.tfvars
 │   └── viewer/
-│       └── params.html
+│       ├── params.html
+│       └── params.md
 ├── README.md              # 英語ドキュメント
 ├── README.ja.md           # 日本語ドキュメント
 └── .gitignore
@@ -283,13 +287,13 @@ jobs:
 - **`generate.py` は完全な HCL パーサですか？**
   いいえ。`variables.tf` の解析は正規表現ベースで、一般的な 1 行の `type`、`description`、`default` リテラルを扱います。複雑な式は生テキストとして比較されるため警告が出ることがありますが、実行自体は失敗しません。
 - **`--check` は `terraform plan` を実行しますか？**
-  いいえ。生成した `.tfvars` や HTML ファイルとコミット済みファイルをバイト単位で比較するだけです。Terraform のインストールは不要です。
+  いいえ。生成した `.tfvars` や HTML / Markdown ファイルとコミット済みファイルをバイト単位で比較するだけです。Terraform のインストールは不要です。
 - **あるパラメータが `viewer/params.html` には出ているのに `.tfvars` にはないのはなぜですか？**
   ビュワーは常に全環境の有効値（上書き値またはデフォルト値）を表示します。一方、`.tfvars` ファイルには、その環境が `values` に含まれているパラメータだけが書き出されます。
 - **新しい環境を追加するにはどうすればいいですか？**
   `params.yaml` の `environments` に環境名を追加し、必要に応じて `values` に上書き値を書いたうえで `generate.py` を実行してください。
 - **`groups`（`label_ja`）や `description_ja` は Terraform に渡されますか？**
-  いいえ。HTML ビュワーの表示だけに使われます。
+  いいえ。HTML / Markdown ビュワーの表示だけに使われます。
 - **`type: any` は何を受け付けますか？**
   任意の値を受け付けます。
 

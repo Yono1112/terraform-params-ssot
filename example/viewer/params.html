@@ -7,9 +7,10 @@
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
-body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, "Hiragino Sans",
+body { margin: 0; display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+       font-family: -apple-system, "Segoe UI", Roboto, "Hiragino Sans",
        "Noto Sans JP", sans-serif; color: #1c2330; background: #f6f7f9; }
-header { position: sticky; top: 0; z-index: 3; background: #fff;
+header { flex: 0 0 auto; background: #fff;
          border-bottom: 1px solid #d9dee6; padding: 14px 20px 10px; }
 h1 { font-size: 19px; margin: 0 0 4px; }
 .sub { margin: 0 0 8px; color: #5a6577; font-size: 13px; }
@@ -18,13 +19,17 @@ h1 { font-size: 19px; margin: 0 0 4px; }
                   vertical-align: -1px; margin-right: 4px; border: 1px solid #c8cfda; }
 #filter { margin-top: 10px; width: min(480px, 100%); padding: 7px 10px; font-size: 14px;
           border: 1px solid #c8cfda; border-radius: 6px; }
-main { padding: 16px 20px 40px; overflow-x: auto; }
+main { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 16px 20px 40px; }
 table { border-collapse: collapse; width: 100%; background: #fff;
-        box-shadow: 0 1px 3px rgba(16,24,40,.08); border-radius: 8px; overflow: hidden; }
+        box-shadow: 0 1px 3px rgba(16,24,40,.08); border-radius: 8px; }
 th, td { border-bottom: 1px solid #e4e8ef; padding: 10px 14px; text-align: left;
          vertical-align: top; font-size: 14px; }
-thead th { position: sticky; top: 118px; background: #eef1f6; z-index: 2;
+thead th { position: sticky; top: 0; background: #eef1f6; z-index: 2;
            font-size: 12.5px; letter-spacing: .04em; color: #44506a; }
+thead th:first-child { border-top-left-radius: 8px; }
+thead th:last-child { border-top-right-radius: 8px; }
+tbody tr:last-child > td:first-child { border-bottom-left-radius: 8px; }
+tbody tr:last-child > td:last-child { border-bottom-right-radius: 8px; }
 thead th:first-child { left: 0; z-index: 3; }
 tr.group td { background: #33415c; color: #fff; font-weight: 600; font-size: 13.5px;
               letter-spacing: .03em; padding-top: 12px; padding-bottom: 12px; }
@@ -42,13 +47,13 @@ td.val { white-space: nowrap; font-variant-numeric: tabular-nums; }
 td.val.is-default { color: #98a1b1; }
 td.val .inh { display: block; font-size: 10.5px; color: #a4adbd; }
 .null { font-style: italic; }
-footer { color: #8a94a6; font-size: 12px; padding: 0 20px 24px; }
+footer { flex: 0 0 auto; color: #8a94a6; font-size: 12px; padding: 0 20px 24px; }
 </style>
 </head>
 <body>
 <header>
 <h1>パラメータシート — example</h1>
-<p class="sub">このページは <code>params.yaml</code>（唯一の正本）から <code>tools/generate.py</code> で自動生成されています。直接編集せず、YAML を編集してください。各セルはその環境での<em>実効値</em>を表示します。</p>
+<p class="sub">このページは <code>params.yaml</code>（唯一の正本）から <code>generate.py</code> で自動生成されています。直接編集せず、YAML を編集してください。各セルはその環境での<em>実効値</em>を表示します。</p>
 <div class="legend"><span><span class="swatch" style="background:#fff1c9"></span>ハイライト = 環境間で値が異なります</span><span><span class="swatch" style="background:#fff"></span><span style="color:#98a1b1">薄字</span> = デフォルト値と同じです</span><span>（デフォルト） = その環境では未設定のため、デフォルト値が適用されます</span></div>
 <input id="filter" type="search" placeholder="パラメータ名やキーワードで絞り込み…" aria-label="パラメータの絞り込み">
 </header>
@@ -67,7 +72,7 @@ footer { color: #8a94a6; font-size: 12px; padding: 0 20px 24px; }
 </tbody>
 </table>
 </main>
-<footer>正本： params.yaml ・ 再生成： python3 tools/generate.py ・ 乖離チェック： python3 tools/generate.py --check</footer>
+<footer>正本： params.yaml ・ 再生成： python3 generate.py ・ 乖離チェック： python3 generate.py --check</footer>
 <script>
 const input = document.getElementById('filter');
 input.addEventListener('input', () => {

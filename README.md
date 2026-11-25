@@ -2,7 +2,7 @@
 
 # terraform-params-ssot
 
-A YAML parameter sheet (`params.yaml`) used as the single source of truth (SSOT) for a Terraform module's per-environment values, generating `.tfvars` files and an HTML viewer with drift detection.
+A YAML parameter sheet (`params.yaml`) used as the single source of truth (SSOT) for a Terraform module's per-environment values, generating `.tfvars` files, an HTML viewer, and a Markdown viewer, with drift detection.
 
 ## Why
 
@@ -11,7 +11,7 @@ Infrastructure teams often keep parameter documentation in a spreadsheet and the
 `terraform-params-ssot` removes the second copy:
 
 - You keep all environment parameter values in one file: `params.yaml`.
-- `generate.py` generates both `environments/<env>.tfvars` (for Terraform) and `viewer/params.html` (for people).
+- `generate.py` generates `environments/<env>.tfvars` (for Terraform) plus `viewer/params.html` and `viewer/params.md` (for people).
 - Generation always cross-checks the sheet against `variables.tf` and any existing `.tfvars` files. `generate.py --check` also byte-compares the generated files with what is committed, so you can use it as a pre-commit or CI gate.
 
 ## How it works
@@ -23,6 +23,7 @@ flowchart LR
     V["variables.tf"] -.->|"cross-checks"| G
     G --> T["environments/{env}.tfvars"]
     G --> H["viewer/params.html"]
+    G --> M["viewer/params.md"]
     G -->|"--check compares"| C["committed outputs"]
 ```
 
@@ -75,23 +76,23 @@ python3 ../generate.py --tf-dir . --check  # drift gate
 Because generation is deterministic, regenerating `example/` leaves all committed outputs unchanged, and `--check` prints:
 
 ```text
-check OK: environments/*.tfvars and viewer/params.html match params.yaml
+check OK: environments/*.tfvars, viewer/params.html and viewer/params.md match params.yaml
 ```
 
-You can also open `example/viewer/params.html` in a browser to inspect the parameter table.
+You can also open `example/viewer/params.html` in a browser to inspect the parameter table, or read the same table in `example/viewer/params.md`.
 
 ## Concepts
 
 ### What you edit vs. what is generated
 
 - **Edit by hand:** `params.yaml`
-- **Generated (do not edit by hand):** `environments/<env>.tfvars` and `viewer/params.html`
+- **Generated (do not edit by hand):** `environments/<env>.tfvars`, `viewer/params.html`, and `viewer/params.md`
 
 Day-to-day workflow for value changes:
 
 1. Edit `params.yaml`.
 2. Run `generate.py`.
-3. Commit `params.yaml`, `environments/*.tfvars`, and `viewer/params.html` together.
+3. Commit `params.yaml`, `environments/*.tfvars`, `viewer/params.html`, and `viewer/params.md` together.
 
 ### When you must also change `variables.tf`
 
@@ -102,8 +103,9 @@ Changing an existing parameter's value only touches `params.yaml`. Adding a new 
 - **Environments:** Environment names are never hardcoded. They come from `environments` in `params.yaml`, in that order.
 - **Directories:** `generate.py` creates parent directories as needed when writing outputs.
 - **tfvars formatting:** Single-line assignments align `=` across consecutive lines the way `terraform fmt` does. A multi-line value (such as a map) is not aligned with its neighbors and starts a new alignment group.
-- **tfvars header:** Generated `.tfvars` files include a header stating they were generated from `params.yaml` by `tools/generate.py` and should not be edited by hand. That `tools/generate.py` path is hardcoded in the header template even if you put the script elsewhere.
+- **tfvars header:** Generated `.tfvars` files include a header stating they were generated from `params.yaml` by `generate.py` and should not be edited by hand. The header template always names the script `generate.py`, even if you put the script elsewhere.
 - **HTML viewer:** `viewer/params.html` is a Japanese-language page (`lang="ja"`) with a filterable table of parameters, descriptions (`description_ja` preferred, falling back to `description`), and effective values per environment. Cells highlight when values differ across environments. Values equal to the default use a lighter style, and environments falling back to the default are marked `（デフォルト）`.
+- **Markdown viewer:** `viewer/params.md` contains the same parameter matrix as the HTML viewer: one table per group with the parameter name, type, description, and the effective value per environment. Environments falling back to the default are marked `（デフォルト）`, and parameters whose values differ across environments are marked `※`.
 
 ## CLI reference
 
@@ -115,6 +117,7 @@ Changing an existing parameter's value only touches `params.yaml`. Adding a new 
 | `--variables PATH` | `<tf-dir>/variables.tf` | Terraform variables file for cross-check |
 | `--tfvars-dir DIR` | `<tf-dir>/environments` | Output directory for `.tfvars` files |
 | `--viewer PATH` | `<tf-dir>/viewer/params.html` | Output path for the HTML viewer |
+| `--md PATH` | `<tf-dir>/viewer/params.md` | Output path for the Markdown viewer |
 | `--title NAME` | `--tf-dir` directory name | Project name shown in the viewer |
 | `--check` | *(off)* | Do not write files; exit `1` if committed outputs differ from generated outputs |
 | `-h`, `--help` | — | Show help and exit |
@@ -198,7 +201,7 @@ This always runs (both when generating and with `--check`).
 
 ### 2. Byte-for-byte check (`--check`)
 
-- Regenerates all expected `.tfvars` files and `viewer/params.html` in memory without writing to disk.
+- Regenerates all expected `.tfvars` files, `viewer/params.html`, and `viewer/params.md` in memory without writing to disk.
 - Compares each expected output against the committed file. A missing file is treated as empty, so it counts as drift.
 - If any file differs, it prints a unified diff (the first 80 lines of each diff), then the line `Run generate.py and commit the regenerated files.`, and exits `1`.
 
@@ -272,7 +275,8 @@ jobs:
 │   │   ├── staging.tfvars
 │   │   └── prod.tfvars
 │   └── viewer/
-│       └── params.html
+│       ├── params.html
+│       └── params.md
 ├── README.md              # English documentation
 ├── README.ja.md           # Japanese documentation
 └── .gitignore
@@ -283,13 +287,13 @@ jobs:
 - **Is `generate.py` a full HCL parser?**
   No. `variables.tf` parsing is regex-based and handles common single-line `type`, `description`, and `default` literals. Complex expressions may be compared as raw text and trigger warnings (which do not fail the run).
 - **Does `--check` run `terraform plan`?**
-  No. It only byte-compares the generated `.tfvars` and HTML files against the committed files. Terraform does not need to be installed.
+  No. It only byte-compares the generated `.tfvars`, HTML, and Markdown files against the committed files. Terraform does not need to be installed.
 - **Why does a parameter appear in `viewer/params.html` but not in `.tfvars`?**
   The viewer always shows the effective value (override or default) for every environment. A `.tfvars` file only includes parameters that list that environment under `values`.
 - **How do I add a new environment?**
   Add the name to `environments` in `params.yaml`, add overrides under `values` where needed, and run `generate.py`.
 - **Are `groups` (`label_ja`) and `description_ja` sent to Terraform?**
-  No. They are only used to render the HTML viewer.
+  No. They are only used to render the HTML and Markdown viewers.
 - **What does `type: any` accept?**
   Any value.
 

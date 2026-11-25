@@ -5,7 +5,7 @@
 #   1. Edit THIS file (never edit environments/*.tfvars by hand).
 #   2. Run:  python3 ../generate.py --tf-dir .
 #   3. Commit params.yaml, the regenerated environments/*.tfvars and
-#      viewer/params.html together.
+#      viewer/params.html + viewer/params.md together.
 #
 # Drift gate (CI / pre-commit):  python3 ../generate.py --tf-dir . --check
 # =============================================================================
